@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import ListContacts from './ListContacts';
-import * as ContactsApi from './utils/ContactsAPI'
-import CreateContact from './CreateContact'
+import * as ContactsApi from './utils/ContactsAPI';
+import CreateContact from './CreateContact';
+import { Route } from 'react-router-dom';
 
 class App extends Component {
   state = {
@@ -24,27 +25,41 @@ class App extends Component {
 
     ContactsApi.remove(contact).then(() => {
       this.setState(contact)
-    })
+    });
   }
 
   addContact = (contact) => {
-    this.setState(prevState => {
-      let newContacts = prevState.contacts;
-      newContacts.push(contact);
-      return {
-        contacts: newContacts
-      }
+    ContactsApi.create(contact).then((contact) => {
+      this.setState((prevState) => ({
+        contacts: prevState.contacts.concat([contact])
+      }));
+    });
+  }
+
+  switchScreen = () => {
+    this.setState({
+      screen: this.state.screen === 'create' ? 'list' : 'create'
     })
   }
 
   render() {
     return (
       <div>
-        {this.state.screen === 'list' && 
-          <ListContacts contacts={this.state.contacts} onDeleteContact={this.removeContact} />}
-        {this.state.screen === 'create' &&
-          <CreateContact />
-        }
+        <Route exact path='/' render={() => 
+            <ListContacts 
+              contacts={this.state.contacts} 
+              onDeleteContact={this.removeContact}
+            />
+          }
+        />
+
+        <Route path='/create' render={({ history }) => (
+            <CreateContact addContact={(contact) => {
+              this.addContact(contact);
+              history.push('/');
+            }} 
+          />
+        )} />
       </div>
     );
   }
